@@ -32,7 +32,7 @@ orderForm.addEventListener('submit', async function (e) {
     formStatus.style.color = '#888';
 
     try {
-        const response = await fetch('http://localhost:5000/order', {
+        const response = await fetch('https://cassava-backend-coka.onrender.com/order', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, product, quantity, message })
