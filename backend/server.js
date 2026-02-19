@@ -1,9 +1,9 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
-
 const app = express();
 const PORT = 5000;
+
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbyeNg00TNwvKwB59_eAo7YmrYM5V5VMx4NVHDh_Jnn-DPoxU17HdUWaJpFfPI9XMoHuPg/exec";
 
 // Middleware
 app.use(cors());
@@ -14,10 +14,9 @@ app.get("/", (req, res) => {
     res.send("Backend is running 🚀");
 });
 
-// Receive orders / messages
-app.post("/order", (req, res) => {
+// Receive orders
+app.post("/order", async (req, res) => {
     const { name, product, quantity, message } = req.body;
-
     if (!name || !product || !quantity) {
         return res.status(400).json({ error: "Missing required fields" });
     }
@@ -31,26 +30,20 @@ app.post("/order", (req, res) => {
         date: new Date().toISOString()
     };
 
-    // Read existing orders
-    const orders = JSON.parse(fs.readFileSync("orders.json", "utf8"));
+    try {
+        await fetch(GOOGLE_SHEET_URL, {
+            method: "POST",
+            body: JSON.stringify(newOrder)
+        });
 
-    // Add new order
-    orders.push(newOrder);
-
-    // Save back to file
-    fs.writeFileSync("orders.json", JSON.stringify(orders, null, 2));
-
-    res.status(201).json({
-        success: true,
-        message: "Order received successfully!",
-        order: newOrder
-    });
-});
-
-// Get all orders (ADMIN USE)
-app.get("/orders", (req, res) => {
-    const orders = JSON.parse(fs.readFileSync("orders.json", "utf8"));
-    res.json(orders);
+        res.status(201).json({
+            success: true,
+            message: "Order received successfully!",
+            order: newOrder
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to save order" });
+    }
 });
 
 // Start server
